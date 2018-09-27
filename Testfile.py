@@ -24,13 +24,15 @@ def get_bar_piano_roll(piano_roll):
 
 LAST_BAR_MODE = 'remove'
 
-l = [f for f in os.listdir('./datasets/Classic/')]
+l = [f for f in os.listdir('./Jazz/')]
 #print(l)
 count = 0
+count2 = 0
 for i in range(len(l)):
     try:
+        #time.sleep(3)
         multitrack = Multitrack(beat_resolution=4, name=os.path.splitext(l[i])[0])
-        x = pretty_midi.PrettyMIDI(os.path.join('./datasets/Classic/', l[i]))
+        x = pretty_midi.PrettyMIDI(os.path.join('./Jazz/', l[i]))
         multitrack.parse_pretty_midi(x)
         category_list = {'Piano': [], 'Drums': []}
         program_dict = {'Piano': 0, 'Drums': 0}
@@ -50,21 +52,27 @@ for i in range(len(l)):
         pr = get_bar_piano_roll(merged)
         #print(pr.shape + ' pr shape')
         pr_clip = pr[:, :, 24:108]
-        print(pr_clip.shape)
+        #print(pr_clip.shape)
         #print(pr_clip.shape + ' pr clip shape')
         if int(pr_clip.shape[0] % 4) != 0:
             pr_clip = np.delete(pr_clip, np.s_[-int(pr_clip.shape[0] % 4):], axis=0)
         pr_re = pr_clip.reshape(-1, 64, 84, 1)
-        print(pr_re.shape)
+        #print(pr_re.shape)
         #print(pr_re.shape + ' pr re shape')
         #save_midis(pr_re, os.path.join('/test/', os.path.splitext(l[i])[0] +'.mid'))
         #save_midis(pr_re, os.path.join('./test-mid/', os.path.splitext(l[i])[0] + '.mid'))
-        np.save(os.path.join('./test2/', os.path.splitext(l[i])[0] + '.npy'), pr_re)
+        #print(pr_re.shape)
+        for j in range(len(pr_re)):
+            #print(pr_re.shape)
+            #print(pr_re[j].shape)
+            np.save(os.path.join('./datasets/Jazz/train', 'Jazz_piano_train_' + str(count2) + '.npy'), pr_re[j])
+            count2 += 1
+        #np.save(os.path.join('./datasets/Jazz/train', os.path.splitext(l[i])[0] + '.npy'), pr_re)
         count += 1
         print(str(count))
         #time.sleep(3)
     except:
-        count += 1
+        #count += 1
         #print(str(count))
         print('Wrong', l[i])
         #time.sleep(3)
@@ -80,14 +88,20 @@ for i in range(len(x)):
     total += z.shape[0]
     #print(z.shape)
 
-x = np.load('classic_train_piano.npy')
-y = np.load('classic_test_piano.npy')
+x = np.load('classic_piano_train_0.npy')
+y = np.load('jazz_test_piano.npy')
 x.shape # (14608, 64, 84, 1)
 y.shape # (1960, 64, 84, 1)
 # 16,568 total (github says 16,545)
-        
-test = np.load('classic_test_piano.npy')
-save_midis(test, os.path.join('./test-mid/', 'classic_test_piano.npy' + '.mid'))
+
+for i in range(len(y)):
+    print(y[i].shape)
+
+for i in len(y):
+    print(i)
+
+test = np.load('2_of_a_kind_jp.npy')
+save_midis(x, os.path.join('./test-mid/', 'classic_test_piano.npy' + '.mid'))
 
         
         
