@@ -12,7 +12,9 @@ from module import *
 from utils import *
 from ops import *
 from metrics import *
-#os.environ["CUDA_VISIBLE_DEVICES"] = os.environ['SGE_GPU']
+
+
+# os.environ["CUDA_VISIBLE_DEVICES"] = os.environ['SGE_GPU']
 
 class cyclegan(object):
     def __init__(self, sess, args):
@@ -114,7 +116,7 @@ class cyclegan(object):
                                                          self.options, reuse=True, name="discriminatorB_all")
         # Generator loss
         self.cycle_loss = self.L1_lambda * abs_criterion(self.real_A, self.fake_A_) \
-            + self.L1_lambda * abs_criterion(self.real_B, self.fake_B_)
+                          + self.L1_lambda * abs_criterion(self.real_B, self.fake_B_)
         self.g_loss_a2b = self.criterionGAN(self.DB_fake, tf.ones_like(self.DB_fake)) + self.cycle_loss
         self.g_loss_b2a = self.criterionGAN(self.DA_fake, tf.ones_like(self.DA_fake)) + self.cycle_loss
         self.g_loss = self.g_loss_a2b + self.g_loss_b2a - self.cycle_loss
@@ -186,12 +188,12 @@ class cyclegan(object):
         for var in t_vars:
             print(var.name)
 
-    def load(self, checkpoint_dir):
+    def load(self, checkpoint_dir, fromGenre, toGenre):
 
         print('loading model...')
 
-        fromGenre = request.form.get("fromGenre")
-        toGenre = request.form.get("toGenre")
+        # fromGenre = request.form.get("fromGenre")
+        # toGenre = request.form.get("toGenre")
 
         model_dir = fromGenre + '2' + toGenre
 
@@ -199,16 +201,19 @@ class cyclegan(object):
 
         checkpoint_dir = os.path.join(checkpoint_dir, model_dir)
 
+        print('checkpoint_dir is ' + str(checkpoint_dir))
+
         ckpt = tf.train.get_checkpoint_state(checkpoint_dir)
         if ckpt and ckpt.model_checkpoint_path:
             ckpt_name = os.path.basename(ckpt.model_checkpoint_path)
-            self.saver.restore(self.sess, os.path.join(checkpoint_dir, ckpt_name))
-            # self.saver.restore(self.sess, os.path.join(checkpoint_dir, 'cyclegan.model-7011'))
+            print('ckpt_name is ' + ckpt_name)
+            # self.saver.restore(self.sess, os.path.join(checkpoint_dir, ckpt_name))
+            self.saver.restore(self.sess, os.path.join(checkpoint_dir, 'cyclegan.model-1843'))
             return True
         else:
             return False
 
-    def test(self, args):
+    def test(self, args, fromGenre, toGenre):
         init_op = tf.global_variables_initializer()
         self.sess.run(init_op)
 
@@ -222,12 +227,13 @@ class cyclegan(object):
         sample_files.sort(key=lambda x: int(os.path.splitext(os.path.basename(x))[0].split('_')[-1]))
         '''
 
-        if self.load(args.checkpoint_dir):
+        if self.load(args.checkpoint_dir, fromGenre, toGenre):
             print(" [*] Load SUCCESS")
         else:
             print(" [!] Load failed...")
 
-        out_origin, out_var, out_var_cycle, in_var = (self.test_A_binary, self.testB_binary, self.testA__binary, self.test_A)
+        out_origin, out_var, out_var_cycle, in_var = (
+        self.test_A_binary, self.testB_binary, self.testA__binary, self.test_A)
 
         '''
         test_dir_mid = os.path.join(args.test_dir, '{}2{}_{}_{}_{}/{}/mid'.format(self.dataset_A_dir,
@@ -238,7 +244,7 @@ class cyclegan(object):
                                                                                   args.which_direction))
         if not os.path.exists(test_dir_mid):
             os.makedirs(test_dir_mid)
-            
+
         test_dir_npy = os.path.join(args.test_dir, '{}2{}_{}_{}_{}/{}/npy'.format(self.dataset_A_dir,
                                                                                   self.dataset_B_dir,
                                                                                   self.now_datetime,
@@ -257,7 +263,7 @@ class cyclegan(object):
         midi_path_cycle = os.path.join(UPLOAD_FOLDER, '{}_cycle.mid'.format(idx + 1))
 
         origin_midi, fake_midi, fake_midi_cycle = self.sess.run([out_origin, out_var, out_var_cycle],
-                                                                    feed_dict={in_var: sample_npy_re})
+                                                                feed_dict={in_var: sample_npy_re})
         save_midis(origin_midi, midi_path_origin)
         save_midis(fake_midi, midi_path_transfer)
         save_midis(fake_midi_cycle, midi_path_cycle)
@@ -274,14 +280,6 @@ class cyclegan(object):
         np.save(os.path.join(npy_path_origin, '{}_origin.npy'.format(idx + 1)), origin_midi)
         np.save(os.path.join(npy_path_transfer, '{}_transfer.npy'.format(idx + 1)), fake_midi)
         np.save(os.path.join(npy_path_cycle, '{}_cycle.npy'.format(idx + 1)), fake_midi_cycle)
-
-
-
-
-
-
-
-
 
 
 # put midi files to be converted in datasets/MIDI/jazz/jazz_midi
@@ -312,6 +310,7 @@ MIDI_FOLDER = 'static/MIDI'
 test_ratio = 0.1
 LAST_BAR_MODE = 'remove'
 
+
 def make_sure_path_exists(path):
     """Create all intermediate-level directories if the given path does not
     exist"""
@@ -321,6 +320,7 @@ def make_sure_path_exists(path):
         if exception.errno != errno.EEXIST:
             raise
 
+
 def get_midi_path(root):
     """Return a list of paths to MIDI files in `root` (recursively)"""
     filepaths = []
@@ -329,6 +329,7 @@ def get_midi_path(root):
             if filename.endswith('.mid'):
                 filepaths.append(os.path.join(dirpath, filename))
     return filepaths
+
 
 def get_midi_info(pm):
     """Return useful information from a pretty_midi.PrettyMIDI instance"""
@@ -351,6 +352,7 @@ def get_midi_info(pm):
     }
     return midi_info
 
+
 def midi_filter(midi_info):
     """Return True for qualified midi files and False for unwanted ones"""
     if midi_info['first_beat_time'] > 0.0:
@@ -361,6 +363,7 @@ def midi_filter(midi_info):
         return False
     return True
 
+
 def get_merged(multitrack):
     """Return a `pypianoroll.Multitrack` instance with piano-rolls merged to
     five tracks (Bass, Drums, Guitar, Piano and Strings)"""
@@ -369,11 +372,11 @@ def get_merged(multitrack):
     for idx, track in enumerate(multitrack.tracks):
         if track.is_drum:
             category_list['Drums'].append(idx)
-        elif track.program//8 == 0:
+        elif track.program // 8 == 0:
             category_list['Piano'].append(idx)
-        elif track.program//8 == 3:
+        elif track.program // 8 == 3:
             category_list['Guitar'].append(idx)
-        elif track.program//8 == 4:
+        elif track.program // 8 == 4:
             category_list['Bass'].append(idx)
         else:
             category_list['Strings'].append(idx)
@@ -385,6 +388,7 @@ def get_merged(multitrack):
         else:
             tracks.append(Track(None, program_dict[key], key == 'Drums', key))
     return Multitrack(None, tracks, multitrack.tempo, multitrack.downbeat, multitrack.beat_resolution, multitrack.name)
+
 
 '''
 def converter(filepath):
@@ -413,6 +417,7 @@ def converter(filepath):
         return None
 '''
 
+
 def converter(filepath, millis):
     """Save a multi-track piano-roll converted from a MIDI file to target
     dataset directory and update MIDI information to `midi_dict`"""
@@ -434,12 +439,13 @@ def converter(filepath, millis):
     print('still ok3')
     return [midi_name, midi_info]
 
+
 def get_bar_piano_roll(piano_roll):
     if int(piano_roll.shape[0] % 64) is not 0:
         if LAST_BAR_MODE == 'fill':
             piano_roll = np.concatenate((piano_roll, np.zeros((64 - piano_roll.shape[0] % 64, 128))), axis=0)
         elif LAST_BAR_MODE == 'remove':
-            piano_roll = np.delete(piano_roll,  np.s_[-int(piano_roll.shape[0] % 64):], axis=0)
+            piano_roll = np.delete(piano_roll, np.s_[-int(piano_roll.shape[0] % 64):], axis=0)
     piano_roll = piano_roll.reshape(-1, 64, 128)
     return piano_roll
 
@@ -452,9 +458,7 @@ def to_binary(bars, threshold=0.0):
     return out_track
 
 
-
 def midiToNpy(millis):
-
     converter_path = os.path.join(UPLOAD_FOLDER, 'MIDI/' + millis + '/converter')
     cleaner_path = os.path.join(UPLOAD_FOLDER, 'MIDI/' + millis + '/cleaner')
 
@@ -466,7 +470,7 @@ def midiToNpy(millis):
     """1. divide the original set into train and test sets"""
     l = [f for f in os.listdir(MIDI_FOLDER)]
     print(len(l))
-    #idx = np.random.choice(len(l), int(test_ratio * len(l)), replace=False)
+    # idx = np.random.choice(len(l), int(test_ratio * len(l)), replace=False)
     idx = np.random.choice(len(l), int(len(l)), replace=False)
     print(len(idx))
     print('?')
@@ -484,14 +488,14 @@ def midiToNpy(millis):
             midi_dict[kv_pair[0]] = kv_pair[1]
     if not os.path.exists(os.path.join(UPLOAD_FOLDER, 'MIDI/' + millis + '/json')):
         os.makedirs(os.path.join(UPLOAD_FOLDER, 'MIDI/' + millis + '/json'))
-    #with open(os.path.join(UPLOAD_FOLDER, 'MIDI/' + millis + '/json'), 'w') as outfile:
+    # with open(os.path.join(UPLOAD_FOLDER, 'MIDI/' + millis + '/json'), 'w') as outfile:
     with open(os.path.join(UPLOAD_FOLDER, 'MIDI/' + millis + '/json/midis.json'), 'w') as outfile:
         print('printing midi_dict...')
         print(midi_dict)
         json.dump(midi_dict, outfile)
         print("[Done] {} files out of {} have been successfully converted".format(len(midi_dict), len(midi_paths)))
     ##with open(os.path.join(UPLOAD_FOLDER, 'MIDI/' + millis + '/json/midis.json'), 'w') as infile:
-        #midi_dict = json.load(infile)
+    # midi_dict = json.load(infile)
     print('s')
     count = 0
     make_sure_path_exists(cleaner_path)
@@ -547,8 +551,10 @@ def midiToNpy(millis):
             pr_re = pr_clip.reshape(-1, 64, 84, 1)
             print('printing pr_re.shape...')
             print(pr_re.shape)
-            save_midis(pr_re, os.path.join(UPLOAD_FOLDER, 'MIDI/' + millis + '/cleaner_midi_gen', os.path.splitext(l[i])[0] + '.mid'))
-            np.save(os.path.join(UPLOAD_FOLDER, 'MIDI/' + millis + '/cleaner_npy', os.path.splitext(l[i])[0] + '.npy'), pr_re)
+            save_midis(pr_re, os.path.join(UPLOAD_FOLDER, 'MIDI/' + millis + '/cleaner_midi_gen',
+                                           os.path.splitext(l[i])[0] + '.mid'))
+            np.save(os.path.join(UPLOAD_FOLDER, 'MIDI/' + millis + '/cleaner_npy', os.path.splitext(l[i])[0] + '.npy'),
+                    pr_re)
         except:
             count += 1
             print('Wrong', l[i])
@@ -577,7 +583,8 @@ def midiToNpy(millis):
     for i in range(x.shape[0]):
         if np.max(x[i]):
             count += 1
-            np.save(os.path.join(UPLOAD_FOLDER, 'MIDI/' + millis + '/phrase_test/jazz_piano_test_{}.npy'.format(i+1)), x[i])
+            np.save(os.path.join(UPLOAD_FOLDER, 'MIDI/' + millis + '/phrase_test/jazz_piano_test_{}.npy'.format(i + 1)),
+                    x[i])
             print(x[i].shape)
         if count == 11216:
             break
