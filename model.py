@@ -271,16 +271,20 @@ class cyclegan(object):
         for idx in range(len(sample_files)):
             sample_npy = np.load(sample_files[idx]) * 1.
             sample_npy_re = sample_npy.reshape(1, sample_npy.shape[0], sample_npy.shape[1], 1)
-            midi_path_origin = os.path.join(UPLOAD_FOLDER, '{}_origin.mid'.format(idx + 1))
-            midi_path_transfer = os.path.join(UPLOAD_FOLDER, '{}_transfer.mid'.format(idx + 1))
-            midi_path_cycle = os.path.join(UPLOAD_FOLDER, '{}_cycle.mid'.format(idx + 1))
+            if not os.path.exists(os.path.join(UPLOAD_FOLDER, 'MIDI/' + millis + '/modified_MIDI')):
+                os.makedirs(os.path.join(UPLOAD_FOLDER, 'MIDI/' + millis + '/modified_MIDI'))
+
+            #midi_path_origin = os.path.join(UPLOAD_FOLDER, '{}_origin.mid'.format(idx + 1))
+            midi_path_transfer = os.path.join(UPLOAD_FOLDER, 'MIDI/' + millis + '/modified_MIDI/' + str(idx + 1) + '.mid')
+            #midi_path_cycle = os.path.join(UPLOAD_FOLDER, '{}_cycle.mid'.format(idx + 1))
 
             origin_midi, fake_midi, fake_midi_cycle = self.sess.run([out_origin, out_var, out_var_cycle],
                                                                     feed_dict={in_var: sample_npy_re})
-            save_midis(origin_midi, midi_path_origin)
+            #save_midis(origin_midi, midi_path_origin)
             save_midis(fake_midi, midi_path_transfer)
-            save_midis(fake_midi_cycle, midi_path_cycle)
+            #save_midis(fake_midi_cycle, midi_path_cycle)
 
+            '''
             npy_path_origin = os.path.join(UPLOAD_FOLDER, 'origin')
             npy_path_transfer = os.path.join(UPLOAD_FOLDER, 'transfer')
             npy_path_cycle = os.path.join(UPLOAD_FOLDER, 'cycle')
@@ -293,7 +297,7 @@ class cyclegan(object):
             np.save(os.path.join(npy_path_origin, '{}_origin.npy'.format(idx + 1)), origin_midi)
             np.save(os.path.join(npy_path_transfer, '{}_transfer.npy'.format(idx + 1)), fake_midi)
             np.save(os.path.join(npy_path_cycle, '{}_cycle.npy'.format(idx + 1)), fake_midi_cycle)
-
+            '''
 
 # put midi files to be converted in datasets/MIDI/jazz/jazz_midi
 # datasets/MIDI' + millis + '/phrase_test is where numpy arrays are saved in the end
