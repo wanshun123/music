@@ -55,6 +55,137 @@ class cyclegan(object):
         self.now_datetime = get_now_datetime()
         self.pool = ImagePool(args.max_size)
 
+    def _build_model(self):
+
+        # define some placeholders
+        self.real_data = tf.placeholder(tf.float32, [self.batch_size, self.time_step, self.pitch_range,
+                                                     self.input_c_dim + self.output_c_dim], name='real_A_and_B')
+        if self.model != 'base':
+            self.real_mixed = tf.placeholder(tf.float32, [self.batch_size, self.time_step, self.pitch_range,
+                                                          self.input_c_dim], name='real_A_and_B_mixed')
+
+        self.real_A = self.real_data[:, :, :, :self.input_c_dim]
+        self.real_B = self.real_data[:, :, :, self.input_c_dim:self.input_c_dim + self.output_c_dim]
+
+        self.gaussian_noise = tf.placeholder(tf.float32, [self.batch_size, self.time_step, self.pitch_range,
+                                                          self.input_c_dim], name='gaussian_noise')
+        # Generator: A - B - A
+        self.fake_B = self.generator(self.real_A, self.options, False, name="generatorA2B")
+        self.fake_A_ = self.generator(self.fake_B, self.options, False, name="generatorB2A")
+        # Generator: B - A - B
+        self.fake_A = self.generator(self.real_B, self.options, True, name="generatorB2A")
+        self.fake_B_ = self.generator(self.fake_A, self.options, True, name="generatorA2B")
+        # to binary
+        self.real_A_binary = to_binary(self.real_A, 0.5)
+        self.real_B_binary = to_binary(self.real_B, 0.5)
+        self.fake_A_binary = to_binary(self.fake_A, 0.5)
+        self.fake_B_binary = to_binary(self.fake_B, 0.5)
+        self.fake_A__binary = to_binary(self.fake_A_, 0.5)
+        self.fake_B__binary = to_binary(self.fake_B_, 0.5)
+
+        # Discriminator: Fake
+        self.DB_fake = self.discriminator(self.fake_B + self.gaussian_noise, self.options,
+                                          reuse=False, name="discriminatorB")
+        self.DA_fake = self.discriminator(self.fake_A + self.gaussian_noise, self.options,
+                                          reuse=False, name="discriminatorA")
+        # Discriminator: Real
+        self.DA_real = self.discriminator(self.real_A + self.gaussian_noise, self.options, reuse=True,
+                                          name="discriminatorA")
+        self.DB_real = self.discriminator(self.real_B + self.gaussian_noise, self.options, reuse=True,
+                                          name="discriminatorB")
+
+        self.fake_A_sample = tf.placeholder(tf.float32, [self.batch_size, self.time_step, self.pitch_range,
+                                                         self.input_c_dim], name='fake_A_sample')
+        self.fake_B_sample = tf.placeholder(tf.float32, [self.batch_size, self.time_step, self.pitch_range,
+                                                         self.input_c_dim], name='fake_B_sample')
+        self.DA_fake_sample = self.discriminator(self.fake_A_sample + self.gaussian_noise,
+                                                 self.options, reuse=True, name="discriminatorA")
+        self.DB_fake_sample = self.discriminator(self.fake_B_sample + self.gaussian_noise,
+                                                 self.options, reuse=True, name="discriminatorB")
+        if self.model != 'base':
+            # Discriminator: All
+            self.DA_real_all = self.discriminator(self.real_mixed + self.gaussian_noise, self.options, reuse=False,
+                                                  name="discriminatorA_all")
+            self.DA_fake_sample_all = self.discriminator(self.fake_A_sample + self.gaussian_noise,
+                                                         self.options, reuse=True, name="discriminatorA_all")
+            self.DB_real_all = self.discriminator(self.real_mixed + self.gaussian_noise, self.options, reuse=False,
+                                                  name="discriminatorB_all")
+            self.DB_fake_sample_all = self.discriminator(self.fake_B_sample + self.gaussian_noise,
+                                                         self.options, reuse=True, name="discriminatorB_all")
+        # Generator loss
+        self.cycle_loss = self.L1_lambda * abs_criterion(self.real_A, self.fake_A_) \
+            + self.L1_lambda * abs_criterion(self.real_B, self.fake_B_)
+        self.g_loss_a2b = self.criterionGAN(self.DB_fake, tf.ones_like(self.DB_fake)) + self.cycle_loss
+        self.g_loss_b2a = self.criterionGAN(self.DA_fake, tf.ones_like(self.DA_fake)) + self.cycle_loss
+        self.g_loss = self.g_loss_a2b + self.g_loss_b2a - self.cycle_loss
+        # Discriminator loss
+        self.db_loss_real = self.criterionGAN(self.DB_real, tf.ones_like(self.DB_real))
+        self.db_loss_fake = self.criterionGAN(self.DB_fake_sample, tf.zeros_like(self.DB_fake_sample))
+        self.db_loss = (self.db_loss_real + self.db_loss_fake) / 2
+        self.da_loss_real = self.criterionGAN(self.DA_real, tf.ones_like(self.DA_real))
+        self.da_loss_fake = self.criterionGAN(self.DA_fake_sample, tf.zeros_like(self.DA_fake_sample))
+        self.da_loss = (self.da_loss_real + self.da_loss_fake) / 2
+        self.d_loss = self.da_loss + self.db_loss
+
+        if self.model != 'base':
+            self.db_all_loss_real = self.criterionGAN(self.DB_real_all, tf.ones_like(self.DB_real_all))
+            self.db_all_loss_fake = self.criterionGAN(self.DB_fake_sample_all, tf.zeros_like(self.DB_fake_sample_all))
+            self.db_all_loss = (self.db_all_loss_real + self.db_all_loss_fake) / 2
+            self.da_all_loss_real = self.criterionGAN(self.DA_real_all, tf.ones_like(self.DA_real_all))
+            self.da_all_loss_fake = self.criterionGAN(self.DA_fake_sample_all, tf.zeros_like(self.DA_fake_sample_all))
+            self.da_all_loss = (self.da_all_loss_real + self.da_all_loss_fake) / 2
+            self.d_all_loss = self.da_all_loss + self.db_all_loss
+            self.D_loss = self.d_loss + self.gamma * self.d_all_loss
+
+        # Define all summaries
+        self.g_loss_a2b_sum = tf.summary.scalar("g_loss_a2b", self.g_loss_a2b)
+        self.g_loss_b2a_sum = tf.summary.scalar("g_loss_b2a", self.g_loss_b2a)
+        self.g_loss_sum = tf.summary.scalar("g_loss", self.g_loss)
+        self.cycle_loss_sum = tf.summary.scalar("cycle_loss", self.cycle_loss)
+        self.g_sum = tf.summary.merge([self.g_loss_a2b_sum, self.g_loss_b2a_sum, self.g_loss_sum, self.cycle_loss_sum])
+        self.db_loss_sum = tf.summary.scalar("db_loss", self.db_loss)
+        self.da_loss_sum = tf.summary.scalar("da_loss", self.da_loss)
+        self.d_loss_sum = tf.summary.scalar("d_loss", self.d_loss)
+        self.db_loss_real_sum = tf.summary.scalar("db_loss_real", self.db_loss_real)
+        self.db_loss_fake_sum = tf.summary.scalar("db_loss_fake", self.db_loss_fake)
+        self.da_loss_real_sum = tf.summary.scalar("da_loss_real", self.da_loss_real)
+        self.da_loss_fake_sum = tf.summary.scalar("da_loss_fake", self.da_loss_fake)
+        if self.model != 'base':
+            self.d_all_loss_sum = tf.summary.scalar("d_all_loss", self.d_all_loss)
+            self.D_loss_sum = tf.summary.scalar("D_loss", self.d_loss)
+            self.d_sum = tf.summary.merge([self.da_loss_sum, self.da_loss_real_sum, self.da_loss_fake_sum,
+                                           self.db_loss_sum, self.db_loss_real_sum, self.db_loss_fake_sum,
+                                           self.d_loss_sum, self.d_all_loss_sum, self.D_loss_sum])
+        else:
+            self.d_sum = tf.summary.merge([self.da_loss_sum, self.da_loss_real_sum, self.da_loss_fake_sum,
+                                           self.db_loss_sum, self.db_loss_real_sum, self.db_loss_fake_sum,
+                                           self.d_loss_sum])
+
+        # Test
+        self.test_A = tf.placeholder(tf.float32, [None, self.time_step, self.pitch_range,
+                                                  self.input_c_dim], name='test_A')
+        self.test_B = tf.placeholder(tf.float32, [None, self.time_step, self.pitch_range,
+                                                  self.output_c_dim], name='test_B')
+        # A - B - A
+        self.testB = self.generator(self.test_A, self.options, True, name="generatorA2B")
+        self.testA_ = self.generator(self.testB, self.options, True, name='generatorB2A')
+        # B - A - B
+        self.testA = self.generator(self.test_B, self.options, True, name="generatorB2A")
+        self.testB_ = self.generator(self.testA, self.options, True, name='generatorA2B')
+        # to binary
+        self.test_A_binary = to_binary(self.test_A, 0.5)
+        self.test_B_binary = to_binary(self.test_B, 0.5)
+        self.testA_binary = to_binary(self.testA, 0.5)
+        self.testB_binary = to_binary(self.testB, 0.5)
+        self.testA__binary = to_binary(self.testA_, 0.5)
+        self.testB__binary = to_binary(self.testB_, 0.5)
+
+        t_vars = tf.trainable_variables()
+        self.d_vars = [var for var in t_vars if 'discriminator' in var.name]
+        self.g_vars = [var for var in t_vars if 'generator' in var.name]
+        for var in t_vars:
+            print(var.name)
+
     def load(self, checkpoint_dir):
 
         print('loading model...')
