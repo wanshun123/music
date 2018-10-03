@@ -139,7 +139,7 @@ def upload_file():
                 model = cyclegan(sess, args)
                 print(request.form.get("fromGenre"))
                 print(request.form.get("toGenre"))
-                model.test(args, request.form.get("fromGenre"), request.form.get("toGenre"))
+                model.test(args, request.form.get("fromGenre"), request.form.get("toGenre"), millis)
 
             #
             # analysis done
