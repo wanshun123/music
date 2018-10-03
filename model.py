@@ -64,6 +64,8 @@ class cyclegan(object):
 
         model_dir = fromGenre + '2' + toGenre
 
+        print(model_dir)
+
         checkpoint_dir = os.path.join(checkpoint_dir, model_dir)
 
         ckpt = tf.train.get_checkpoint_state(checkpoint_dir)
@@ -152,7 +154,7 @@ class cyclegan(object):
 
 
 # put midi files to be converted in datasets/MIDI/jazz/jazz_midi
-# datasets/MIDI/jazz/jazz_test/phrase_test is where numpy arrays are saved in the end
+# datasets/MIDI' + millis + '/phrase_test is where numpy arrays are saved in the end
 
 import numpy as np
 import glob
@@ -178,9 +180,6 @@ UPLOAD_FOLDER = 'static'
 MIDI_FOLDER = 'static/MIDI'
 test_ratio = 0.1
 LAST_BAR_MODE = 'remove'
-
-converter_path = os.path.join(UPLOAD_FOLDER, 'MIDI/jazz/jazz_test/converter')
-cleaner_path = os.path.join(UPLOAD_FOLDER, 'MIDI/jazz/jazz_test/cleaner')
 
 def make_sure_path_exists(path):
     """Create all intermediate-level directories if the given path does not
@@ -256,21 +255,53 @@ def get_merged(multitrack):
             tracks.append(Track(None, program_dict[key], key == 'Drums', key))
     return Multitrack(None, tracks, multitrack.tempo, multitrack.downbeat, multitrack.beat_resolution, multitrack.name)
 
+'''
 def converter(filepath):
     """Save a multi-track piano-roll converted from a MIDI file to target
     dataset directory and update MIDI information to `midi_dict`"""
     try:
         midi_name = os.path.splitext(os.path.basename(filepath))[0]
+        print('printing midi_name in the converter function...')
+        print(midi_name)
         multitrack = Multitrack(beat_resolution=24, name=midi_name)
         pm = pretty_midi.PrettyMIDI(filepath)
         midi_info = get_midi_info(pm)
         multitrack.parse_pretty_midi(pm)
         merged = get_merged(multitrack)
+        print('printing merged...')
+        print(merged)
+        converter_path = os.path.join(UPLOAD_FOLDER, 'MIDI/' + millis + '/converter')
+        print('still ok1')
         make_sure_path_exists(converter_path)
+        print('still ok2')
         merged.save(os.path.join(converter_path, midi_name + '.npz'))
+        print('still ok3')
         return [midi_name, midi_info]
     except:
+        print('SOMETHING WRONG')
         return None
+'''
+
+def converter(filepath, millis):
+    """Save a multi-track piano-roll converted from a MIDI file to target
+    dataset directory and update MIDI information to `midi_dict`"""
+    midi_name = os.path.splitext(os.path.basename(filepath))[0]
+    print('printing midi_name in the converter function...')
+    print(midi_name)
+    multitrack = Multitrack(beat_resolution=24, name=midi_name)
+    pm = pretty_midi.PrettyMIDI(filepath)
+    midi_info = get_midi_info(pm)
+    multitrack.parse_pretty_midi(pm)
+    merged = get_merged(multitrack)
+    print('printing merged...')
+    print(merged)
+    converter_path = os.path.join(UPLOAD_FOLDER, 'MIDI/' + millis + '/converter')
+    print('still ok1')
+    make_sure_path_exists(converter_path)
+    print('still ok2')
+    merged.save(os.path.join(converter_path, midi_name + '.npz'))
+    print('still ok3')
+    return [midi_name, midi_info]
 
 def get_bar_piano_roll(piano_roll):
     if int(piano_roll.shape[0] % 64) is not 0:
@@ -291,31 +322,45 @@ def to_binary(bars, threshold=0.0):
 
 
 
-def midiToNpy():
+def midiToNpy(millis):
+
+    converter_path = os.path.join(UPLOAD_FOLDER, 'MIDI/' + millis + '/converter')
+    cleaner_path = os.path.join(UPLOAD_FOLDER, 'MIDI/' + millis + '/cleaner')
+
+    if not os.path.exists(os.path.join(UPLOAD_FOLDER, 'MIDI/' + millis + '/converter')):
+        os.makedirs(os.path.join(UPLOAD_FOLDER, 'MIDI/' + millis + '/converter'))
+    if not os.path.exists(os.path.join(UPLOAD_FOLDER, 'MIDI/' + millis + '/cleaner')):
+        os.makedirs(os.path.join(UPLOAD_FOLDER, 'MIDI/' + millis + '/cleaner'))
+
     """1. divide the original set into train and test sets"""
     l = [f for f in os.listdir(MIDI_FOLDER)]
     print(len(l))
     #idx = np.random.choice(len(l), int(test_ratio * len(l)), replace=False)
     idx = np.random.choice(len(l), int(len(l)), replace=False)
     print(len(idx))
-    if not os.path.exists(os.path.join(MIDI_FOLDER, 'origin')):
-        os.makedirs(os.path.join(MIDI_FOLDER, 'origin'))
     print('?')
 
     """2. convert_clean.py"""
     midi_paths = get_midi_path(MIDI_FOLDER)
+    print('printing midi_paths...')
+    print(midi_paths)
     midi_dict = {}
-    kv_pairs = [converter(midi_path) for midi_path in midi_paths]
+    kv_pairs = [converter(midi_path, millis) for midi_path in midi_paths]
+    print('printing kv_pairs...')
+    print(kv_pairs)
     for kv_pair in kv_pairs:
         if kv_pair is not None:
             midi_dict[kv_pair[0]] = kv_pair[1]
-    with open(os.path.join(MIDI_FOLDER, 'json/midis.json'), 'w') as outfile:
+    if not os.path.exists(os.path.join(UPLOAD_FOLDER, 'MIDI/' + millis + '/json')):
+        os.makedirs(os.path.join(UPLOAD_FOLDER, 'MIDI/' + millis + '/json'))
+    #with open(os.path.join(UPLOAD_FOLDER, 'MIDI/' + millis + '/json'), 'w') as outfile:
+    with open(os.path.join(UPLOAD_FOLDER, 'MIDI/' + millis + '/json/midis.json'), 'w') as outfile:
+        print('printing midi_dict...')
         print(midi_dict)
-        print(MIDI_FOLDER)
         json.dump(midi_dict, outfile)
         print("[Done] {} files out of {} have been successfully converted".format(len(midi_dict), len(midi_paths)))
-    with open(os.path.join(MIDI_FOLDER, 'json/midis.json')) as infile:
-        midi_dict = json.load(infile)
+    ##with open(os.path.join(UPLOAD_FOLDER, 'MIDI/' + millis + '/json/midis.json'), 'w') as infile:
+        #midi_dict = json.load(infile)
     print('s')
     count = 0
     make_sure_path_exists(cleaner_path)
@@ -325,32 +370,32 @@ def midiToNpy():
             midi_dict_clean[key] = midi_dict[key]
             count += 1
             shutil.copyfile(os.path.join(converter_path, key + '.npz'), os.path.join(cleaner_path, key + '.npz'))
-    with open(os.path.join(UPLOAD_FOLDER, 'MIDI/jazz/jazz_test/midis_clean.json'), 'w') as outfile:
+    with open(os.path.join(UPLOAD_FOLDER, 'MIDI/' + millis + '/midis_clean.json'), 'w') as outfile:
         json.dump(midi_dict_clean, outfile)
     print("[Done] {} files out of {} have been successfully cleaned".format(count, len(midi_dict)))
 
     """3. choose the clean midi from original sets"""
-    if not os.path.exists(os.path.join(UPLOAD_FOLDER, 'MIDI/jazz/jazz_test/cleaner_midi')):
-        os.makedirs(os.path.join(UPLOAD_FOLDER, 'MIDI/jazz/jazz_test/cleaner_midi'))
-    l = [f for f in os.listdir(os.path.join(UPLOAD_FOLDER, 'MIDI/jazz/jazz_test/cleaner'))]
+    if not os.path.exists(os.path.join(UPLOAD_FOLDER, 'MIDI/' + millis + '/cleaner_midi')):
+        os.makedirs(os.path.join(UPLOAD_FOLDER, 'MIDI/' + millis + '/cleaner_midi'))
+    l = [f for f in os.listdir(os.path.join(UPLOAD_FOLDER, 'MIDI/' + millis + '/cleaner'))]
     print(l)
     print(len(l))
     for i in l:
-        shutil.copy(os.path.join(UPLOAD_FOLDER, 'MIDI/jazz/jazz_test/origin_midi', os.path.splitext(i)[0] + '.mid'),
-                    os.path.join(UPLOAD_FOLDER, 'MIDI/jazz/jazz_test/cleaner_midi', os.path.splitext(i)[0] + '.mid'))
+        shutil.copy(os.path.join(UPLOAD_FOLDER, 'MIDI', os.path.splitext(i)[0] + '.mid'),
+                    os.path.join(UPLOAD_FOLDER, 'MIDI/' + millis + '/cleaner_midi', os.path.splitext(i)[0] + '.mid'))
 
     """4. merge and crop"""
-    if not os.path.exists(os.path.join(UPLOAD_FOLDER, 'MIDI/jazz/jazz_test/cleaner_midi_gen')):
-        os.makedirs(os.path.join(UPLOAD_FOLDER, 'MIDI/jazz/jazz_test/cleaner_midi_gen'))
-    if not os.path.exists(os.path.join(UPLOAD_FOLDER, 'MIDI/jazz/jazz_test/cleaner_npy')):
-        os.makedirs(os.path.join(UPLOAD_FOLDER, 'MIDI/jazz/jazz_test/cleaner_npy'))
-    l = [f for f in os.listdir(os.path.join(UPLOAD_FOLDER, 'MIDI/jazz/jazz_test/cleaner_midi'))]
+    if not os.path.exists(os.path.join(UPLOAD_FOLDER, 'MIDI/' + millis + '/cleaner_midi_gen')):
+        os.makedirs(os.path.join(UPLOAD_FOLDER, 'MIDI/' + millis + '/cleaner_midi_gen'))
+    if not os.path.exists(os.path.join(UPLOAD_FOLDER, 'MIDI/' + millis + '/cleaner_npy')):
+        os.makedirs(os.path.join(UPLOAD_FOLDER, 'MIDI/' + millis + '/cleaner_npy'))
+    l = [f for f in os.listdir(os.path.join(UPLOAD_FOLDER, 'MIDI/' + millis + '/cleaner_midi'))]
     print(l)
     count = 0
     for i in range(len(l)):
         try:
             multitrack = Multitrack(beat_resolution=4, name=os.path.splitext(l[i])[0])
-            x = pretty_midi.PrettyMIDI(os.path.join(UPLOAD_FOLDER, 'MIDI/jazz/jazz_test/cleaner_midi', l[i]))
+            x = pretty_midi.PrettyMIDI(os.path.join(UPLOAD_FOLDER, 'MIDI/' + millis + '/cleaner_midi', l[i]))
             multitrack.parse_pretty_midi(x)
             category_list = {'Piano': [], 'Drums': []}
             program_dict = {'Piano': 0, 'Drums': 0}
@@ -369,9 +414,10 @@ def midiToNpy():
             if int(pr_clip.shape[0] % 4) != 0:
                 pr_clip = np.delete(pr_clip, np.s_[-int(pr_clip.shape[0] % 4):], axis=0)
             pr_re = pr_clip.reshape(-1, 64, 84, 1)
+            print('printing pr_re.shape...')
             print(pr_re.shape)
-            save_midis(pr_re, os.path.join(UPLOAD_FOLDER, 'MIDI/jazz/jazz_test/cleaner_midi_gen', os.path.splitext(l[i])[0] + '.mid'))
-            np.save(os.path.join(UPLOAD_FOLDER, 'MIDI/jazz/jazz_test/cleaner_npy', os.path.splitext(l[i])[0] + '.npy'), pr_re)
+            save_midis(pr_re, os.path.join(UPLOAD_FOLDER, 'MIDI/' + millis + '/cleaner_midi_gen', os.path.splitext(l[i])[0] + '.mid'))
+            np.save(os.path.join(UPLOAD_FOLDER, 'MIDI/' + millis + '/cleaner_npy', os.path.splitext(l[i])[0] + '.npy'), pr_re)
         except:
             count += 1
             print('Wrong', l[i])
@@ -379,82 +425,29 @@ def midiToNpy():
     print(count)
 
     """5. concatenate into a big binary numpy array file"""
-    l = [f for f in os.listdir(os.path.join(UPLOAD_FOLDER, 'MIDI/jazz/jazz_test/cleaner_npy'))]
+    l = [f for f in os.listdir(os.path.join(UPLOAD_FOLDER, 'MIDI/' + millis + '/cleaner_npy'))]
     print(l)
-    train = np.load(os.path.join(UPLOAD_FOLDER, 'MIDI/jazz/jazz_test/cleaner_npy', l[0]))
+    train = np.load(os.path.join(UPLOAD_FOLDER, 'MIDI/' + millis + '/cleaner_npy', l[0]))
     print(train.shape, np.max(train))
     for i in range(1, len(l)):
         print(i, l[i])
-        t = np.load(os.path.join(UPLOAD_FOLDER, 'MIDI/jazz/jazz_test/cleaner_npy', l[i]))
+        t = np.load(os.path.join(UPLOAD_FOLDER, 'MIDI/' + millis + '/cleaner_npy', l[i]))
         train = np.concatenate((train, t), axis=0)
+    print('printing train.shape...')
     print(train.shape)
-    np.save(os.path.join(UPLOAD_FOLDER, 'MIDI/jazz/jazz_test/jazz_test_piano.npy'), (train > 0.0))
+    np.save(os.path.join(UPLOAD_FOLDER, 'MIDI/' + millis + '/jazz_test_piano.npy'), (train > 0.0))
 
     """6. separate numpy array file into single phrases"""
-    if not os.path.exists(os.path.join(UPLOAD_FOLDER, 'MIDI/jazz/jazz_test/phrase_test')):
-        os.makedirs(os.path.join(UPLOAD_FOLDER, 'MIDI/jazz/jazz_test/phrase_test'))
-    x = np.load(os.path.join(UPLOAD_FOLDER, 'MIDI/jazz/jazz_test/jazz_test_piano.npy'))
+    if not os.path.exists(os.path.join(UPLOAD_FOLDER, 'MIDI/' + millis + '/phrase_test')):
+        os.makedirs(os.path.join(UPLOAD_FOLDER, 'MIDI/' + millis + '/phrase_test'))
+    x = np.load(os.path.join(UPLOAD_FOLDER, 'MIDI/' + millis + '/jazz_test_piano.npy'))
     print(x.shape)
     count = 0
     for i in range(x.shape[0]):
         if np.max(x[i]):
             count += 1
-            np.save(os.path.join(UPLOAD_FOLDER, 'MIDI/jazz/jazz_test/phrase_test/jazz_piano_test_{}.npy'.format(i+1)), x[i])
+            np.save(os.path.join(UPLOAD_FOLDER, 'MIDI/' + millis + '/phrase_test/jazz_piano_test_{}.npy'.format(i+1)), x[i])
             print(x[i].shape)
         if count == 11216:
             break
     print(count)
-
-"""some other codes"""
-'''
-filepaths = []
-msd_id_list = []
-for dirpath, _, filenames in os.walk(os.path.join(UPLOAD_FOLDER, 'MIDI/Sinfonie Data')):
-    for filename in filenames:
-        if filename.endswith('.mid'):
-            msd_id_list.append(filename)
-            filepaths.append(os.path.join(dirpath, filename))
-print(filepaths)
-print(msd_id_list)
-for i in range(len(filepaths)):
-    shutil.copy(filepaths[i], os.path.join(UPLOAD_FOLDER, 'MIDI/jazz/jazz_midi/{}'.format(msd_id_list[i])))
-
-x1 = np.load(os.path.join(UPLOAD_FOLDER, 'MIDI/jazz/jazz_train/jazz_train_piano_1.npy'))
-x2 = np.load(os.path.join(UPLOAD_FOLDER, 'MIDI/jazz/jazz_train/jazz_train_piano_2.npy'))
-x3 = np.load(os.path.join(UPLOAD_FOLDER, 'MIDI/jazz/jazz_train/jazz_train_piano_3.npy'))
-x4 = np.load(os.path.join(UPLOAD_FOLDER, 'MIDI/jazz/jazz_train/jazz_train_piano_4.npy'))
-x5 = np.load(os.path.join(UPLOAD_FOLDER, 'MIDI/jazz/jazz_train/jazz_train_piano_5.npy'))
-x = np.concatenate((x1, x2, x3, x4, x5), axis=0)
-print(x.shape)
-np.save(os.path.join(UPLOAD_FOLDER, 'MIDI/jazz/jazz_train/jazz_train_piano.npy'), x)
-
-
-multitrack = Multitrack(beat_resolution=4, name='YMCA')
-x = pretty_midi.PrettyMIDI(os.path.join(UPLOAD_FOLDER, 'MIDI/famous_songs/P2C/origin/YMCA.mid'))
-multitrack.parse_pretty_midi(x)
-#
-category_list = {'Piano': [], 'Drums': []}
-program_dict = {'Piano': 0, 'Drums': 0}
-#
-for idx, track in enumerate(multitrack.tracks):
-    if track.is_drum:
-        category_list['Drums'].append(idx)
-    else:
-        category_list['Piano'].append(idx)
-tracks = []
-merged = multitrack[category_list['Piano']].get_merged_pianoroll()
-#
-merged = multitrack.get_merged_pianoroll()
-print(merged.shape)
-#
-pr = get_bar_piano_roll(merged)
-print(pr.shape)
-pr_clip = pr[:, :, 24:108]
-print(pr_clip.shape)
-if int(pr_clip.shape[0] % 4) != 0:
-    pr_clip = np.delete(pr_clip, np.s_[-int(pr_clip.shape[0] % 4):], axis=0)
-pr_re = pr_clip.reshape(-1, 64, 84, 1)
-print(pr_re.shape)
-save_midis(pr_re, os.path.join(UPLOAD_FOLDER, 'MIDI/famous_songs/P2C/merged_midi/YMCA.mid'), 127)
-np.save(os.path.join(UPLOAD_FOLDER, 'MIDI/famous_songs/P2C/merged_npy/YMCA.npy'), (pr_re > 0.0))
-'''
