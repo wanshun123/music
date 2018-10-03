@@ -14,6 +14,8 @@ import glob
 import time
 import sys
 
+import argparse
+
 from model import *
 
 # initialize our Flask application and the Keras model
@@ -122,7 +124,7 @@ def upload_file():
 
             print('running midiToNpy...')
 
-            midiToNpy()
+            midiToNpy(millis)
 
             print('ok')
 
@@ -133,6 +135,8 @@ def upload_file():
                 print('???')
 
                 model = cyclegan(sess, args)
+                print(request.form.get("fromGenre"))
+                print(request.form.get("toGenre"))
                 model.test(args)
 
             #
@@ -166,15 +170,6 @@ if __name__ == "__main__":
 
     app.secret_key = 'super secret key'
     app.config['SESSION_TYPE'] = 'filesystem'
-
-    # if running on ec2 (port 80 gives permission error)
-    # app.run(host = "0.0.0.0", port = 5000, debug = True, threaded = False)
-    
-    # if running on local machine
-    app.run(host = "0.0.0.0", port = 80, debug = True, threaded = False)
-
-
-
 
     parser = argparse.ArgumentParser(description='')
     parser.add_argument('--dataset_dir', dest='dataset_dir', default='JAZZ2ROCK', help='path of the dataset')
@@ -226,3 +221,15 @@ if __name__ == "__main__":
     parser.add_argument('--type', dest='type', default='cyclegan', help='cyclegan or classifier')
 
     args = parser.parse_args()
+
+    print(args)
+
+    # if running on ec2 (port 80 gives permission error)
+    # app.run(host = "0.0.0.0", port = 5000, debug = True, threaded = False)
+    
+    # if running on local machine
+    app.run(host = "0.0.0.0", port = 80, debug = True, threaded = False)
+
+
+
+
