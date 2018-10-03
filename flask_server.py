@@ -29,32 +29,33 @@ app = Flask(__name__)
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 app.config['MIDI_FOLDER'] = MIDI_FOLDER
 
-#cascPath = "haarcascade_frontalface_default.xml"
+# cascPath = "haarcascade_frontalface_default.xml"
 cascPath = os.path.join(app.config['UPLOAD_FOLDER'], 'haarcascade_frontalface_default.xml')
 
 # Create the haar cascade
 faceCascade = cv2.CascadeClassifier(cascPath)
 
+
 def allowed_file(filename):
     return '.' in filename and \
-        filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+           filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+
 
 @app.route('/', methods=['GET', 'POST'])
 def home():
-    
     full_filename = os.path.join(app.config['UPLOAD_FOLDER'], 'placeholder.png')
-    
-    return render_template('index.html', displayedimage = full_filename)
-    
+
+    return render_template('index.html', displayedimage=full_filename)
+
+
 @app.route('/analyze', methods=['GET', 'POST'])
 def analyze():
     if request.method == 'POST':
-
         '''
-    
+
         content = request.get_data(as_text = True)
         content = str(content)
-                            
+
         image = cv2.imread(os.path.join(app.config['UPLOAD_FOLDER'], content))
         image = cv2.resize(image, dsize=(350, 350))
         image = np.expand_dims(image, axis=0)
@@ -75,19 +76,20 @@ def analyze():
         better_than = int(round(better_than))
         better_than = str(better_than)
         better_than = '<b>' + better_than + '%</b>'
-                        
+
         os.remove(os.path.join(app.config['UPLOAD_FOLDER'], content))
-        
+
         '''
-        
+
         # below doesn't work properly - deleted before image loads for user
         # face_location = os.path.join(app.config['UPLOAD_FOLDER'], 'F' + content)
         # os.remove(face_location)
 
         aggregated_info = 'Image processed!'
-                        
+
     return aggregated_info
-    
+
+
 @app.route('/uploaded', methods=['GET', 'POST'])
 def upload_file():
     if request.method == 'POST':
@@ -96,12 +98,12 @@ def upload_file():
         if 'file' not in request.files:
             print('No file found.')
             feedback = 'No file found.'
-            return jsonify(msg = feedback, success = False)
+            return jsonify(msg=feedback, success=False)
         file = request.files['file']
         if file.filename == '':
             print('No file name.')
             feedback = 'No file name.'
-            return jsonify(msg = feedback, success = False)
+            return jsonify(msg=feedback, success=False)
         if request.form.get("fromGenre") == request.form.get("toGenre"):
             print('You must select different genres.')
             feedback = 'You must select different genres.'
@@ -109,15 +111,15 @@ def upload_file():
         if file and allowed_file(file.filename):
 
             print('file and allowed_file(file.filename)')
-        
+
             millis = int(round(time.time() * 1000))
             millis = str(millis)
-        
+
             filename = millis + secure_filename(file.filename)
             f = request.files['file']
             file_location = os.path.join(app.config['MIDI_FOLDER'], filename)
             f.save(file_location)
-            
+
             #
             # run analysis
             #
@@ -137,35 +139,36 @@ def upload_file():
                 model = cyclegan(sess, args)
                 print(request.form.get("fromGenre"))
                 print(request.form.get("toGenre"))
-                model.test(args)
+                model.test(args, request.form.get("fromGenre"), request.form.get("toGenre"))
 
             #
             # analysis done
             #
-             
+
             modified_filename = 'F' + filename
-            
+
             modified_location = os.path.join(app.config['UPLOAD_FOLDER'], modified_filename)
-            #im.save(modified_location)
+            # im.save(modified_location)
 
             feedback = 'ok'
-            
-            return jsonify(original_image = filename, face_image = modified_location, msg = feedback, success = True)
-                
-        else:
-            print('It seems you haven\'t uploaded a MIDI file. Your file must be of type midi. If you have a file in a different audio format like MP3 or WAV, please convert it to midi first.')
-            feedback = 'It seems you haven\'t uploaded a MIDI file. Your file must be of type midi. If you have a file in a different audio format like MP3 or WAV, please convert it to midi first.'
-            return jsonify(msg = feedback, success = False)
-                                        
-if __name__ == "__main__":
 
+            return jsonify(original_image=filename, face_image=modified_location, msg=feedback, success=True)
+
+        else:
+            print(
+                'It seems you haven\'t uploaded a MIDI file. Your file must be of type midi. If you have a file in a different audio format like MP3 or WAV, please convert it to midi first.')
+            feedback = 'It seems you haven\'t uploaded a MIDI file. Your file must be of type midi. If you have a file in a different audio format like MP3 or WAV, please convert it to midi first.'
+            return jsonify(msg=feedback, success=False)
+
+
+if __name__ == "__main__":
     # ec2 machine gives maximum recursion depth exceeded error without this - fine on local machine
     sys.setrecursionlimit(10000)
 
     print("Loading Keras model and Flask starting server...")
-                
-    #model = load_model('my_model.h5')
-    
+
+    # model = load_model('my_model.h5')
+
     print('model loaded')
 
     app.secret_key = 'super secret key'
@@ -226,10 +229,9 @@ if __name__ == "__main__":
 
     # if running on ec2 (port 80 gives permission error)
     # app.run(host = "0.0.0.0", port = 5000, debug = True, threaded = False)
-    
-    # if running on local machine
-    app.run(host = "0.0.0.0", port = 80, debug = True, threaded = False)
 
+    # if running on local machine
+    app.run(host="0.0.0.0", port=80, debug=True, threaded=False)
 
 
 
