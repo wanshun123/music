@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>MIDI Converter</title>
+  <link href='https://fonts.googleapis.com/css?family=Open+Sans:400,700' rel='stylesheet' type='text/css'>
+  <link href='https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css' rel='stylesheet' type='text/css'>
+  <link rel="stylesheet" href= "{{ url_for('static',filename='app.css') }}">
+  
+<script src="https://code.jquery.com/jquery-3.1.1.min.js"></script>
+  
+</head>
+
+<body>
+        
+    <br>
+    
+    <div class="col-xs-10 col-md-offset-1">
+
+    <form action = "/uploaded" method = "POST"
+    enctype = "multipart/form-data">
+    
+    <b>What genre is your MIDI file?</b>
+    <select class="form-control" name="fromGenre" class="input-small">
+    <option>Classic</option>
+    <option>Jazz</option>
+    <option>Pop</option>
+    <option>Metal</option>
+    <option>Rap</option>
+    </select>
+        
+    <b>What genre should your MIDI file be converted to?</b>
+    <select class="form-control" name="toGenre" class="input-small">
+    <option>Classic</option>
+    <option>Jazz</option>
+    <option>Pop</option>
+    <option>Metal</option>
+    <option>Rap</option>
+    </select>
+              
+    <input type = "file" name = "file" class="form-control-file"/>
+    <input type = "submit" class="btn btn-info" value="Upload MIDI"/>
+    </form>
+    
+    </div>
+
+    <div class="col-xs-12">
+
+    <br>
+
+<progressinfo></progressinfo>
+
+<userinfo>
+        
+<p>The app was created by Alexey Moiseenkov (Russian: Алексей Моисеенков), Oleg Poyaganov, Ilya Frolov, Andrey Usoltsev and it was launched in June 2016 as a free mobile app.[4] A week after its launch, the app gained popularity and received over 7.5 million downloads and over 1 million active users as of July 2016.[5][6] It debuted on iOS on Apple App Store during the first week of June and it became the leading app at the App Store in Russia and other neighboring countries.[7] On 19 July 2016, the developer launched a beta version of the app for Android and it closed few hours later by developers after receiving feedback from its users.[8][9] It was later released publicly on 24 July 2016 on Google Play.[2]</p>
+
+</userinfo>
+
+</div>
+
+</body>
+
+<script type="text/javascript">
+$('form').submit(function(e){
+e.preventDefault();
+
+/*
+
+let imgPlaceholder = document.getElementById('image-placeholder')
+
+let userinfo = document.getElementById('userinfo')
+userinfo.innerHTML = '<loadingtext><img src="/static/spinner.gif" width="200px" height="200px" class ="center-block"><p><i>Processing image...</i></p></loadingtext>'
+
+*/
+
+var form = document.getElementById("form");
+var fd = new FormData($('form'));
+
+console.log(fd)
+
+$.ajax({
+url: $(this).attr('action'),
+type: 'POST',
+data: new FormData($('form')[0]),
+cache: false,
+contentType: false,
+processData: false
+
+}).done(function(res){
+
+if (res['success'] == true) {
+
+face_location = res['face_image']
+original_image = res['original_image']
+
+console.log(res)
+
+// imgPlaceholder.innerHTML = '<img src="/static/qm.jpg">'
+
+// userinfo.innerHTML = '<loadingtext><img src="/static/spinner.gif" width="200px" height="200px" class ="center-block"><p><i>Compiling analysis...</i></p><p><b>' + res['msg'] + '</b></p></loadingtext>'
+
+$.ajax({
+url: "/analyze",
+type: 'POST',
+data: original_image,
+cache: false,
+contentType: false,
+processData: false 
+}).done(function(res){
+// imgPlaceholder.innerHTML = '<img src="' + face_location + '">'
+// userinfo.innerHTML = res
+console.log(res)
+})
+
+} else {
+
+// userinfo.innerHTML = '<b>' + res['msg'] + '</b>'
+
+}
+
+})
+})
+</script>
+
+</html>
