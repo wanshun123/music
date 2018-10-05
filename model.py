@@ -444,6 +444,9 @@ def converter(filepath, millis):
     multitrack = Multitrack(beat_resolution=24, name=midi_name)
     pm = pretty_midi.PrettyMIDI(filepath)
     midi_info = get_midi_info(pm)
+    print(pm)
+    print('printing midi_info...')
+    print(midi_info)
     multitrack.parse_pretty_midi(pm)
     merged = get_merged(multitrack)
     print('printing merged...')
@@ -475,7 +478,9 @@ def to_binary(bars, threshold=0.0):
     return out_track
 
 
-def midiToNpy(millis):
+def midiToNpy(millis, filename):
+    tf.reset_default_graph()
+
     converter_path = os.path.join(UPLOAD_FOLDER, 'MIDI/' + millis + '/converter')
     cleaner_path = os.path.join(UPLOAD_FOLDER, 'MIDI/' + millis + '/cleaner')
 
@@ -485,19 +490,24 @@ def midiToNpy(millis):
         os.makedirs(os.path.join(UPLOAD_FOLDER, 'MIDI/' + millis + '/cleaner'))
 
     """1. divide the original set into train and test sets"""
+    '''
     l = [f for f in os.listdir(MIDI_FOLDER)]
     print(len(l))
     # idx = np.random.choice(len(l), int(test_ratio * len(l)), replace=False)
     idx = np.random.choice(len(l), int(len(l)), replace=False)
     print(len(idx))
     print('?')
+    '''
 
     """2. convert_clean.py"""
     midi_paths = get_midi_path(MIDI_FOLDER)
     print('printing midi_paths...')
     print(midi_paths)
     midi_dict = {}
-    kv_pairs = [converter(midi_path, millis) for midi_path in midi_paths]
+    #kv_pairs = [converter(midi_path, millis) for midi_path in midi_paths]
+    file_location = os.path.join(MIDI_FOLDER, filename)
+    print('file_location is ' + file_location)
+    kv_pairs = [converter(file_location, millis)]
     print('printing kv_pairs...')
     print(kv_pairs)
     for kv_pair in kv_pairs:
