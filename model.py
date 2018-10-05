@@ -591,28 +591,31 @@ def midiToNpy(millis, filename):
     """5. concatenate into a big binary numpy array file"""
     l = [f for f in os.listdir(os.path.join(UPLOAD_FOLDER, 'MIDI/' + millis + '/cleaner_npy'))]
     print(l)
-    train = np.load(os.path.join(UPLOAD_FOLDER, 'MIDI/' + millis + '/cleaner_npy', l[0]))
-    print(train.shape, np.max(train))
-    for i in range(1, len(l)):
-        print(i, l[i])
-        t = np.load(os.path.join(UPLOAD_FOLDER, 'MIDI/' + millis + '/cleaner_npy', l[i]))
-        train = np.concatenate((train, t), axis=0)
-    print('printing train.shape...')
-    print(train.shape)
-    np.save(os.path.join(UPLOAD_FOLDER, 'MIDI/' + millis + '/jazz_test_piano.npy'), (train > 0.0))
+    if len(l) > 0:
+        train = np.load(os.path.join(UPLOAD_FOLDER, 'MIDI/' + millis + '/cleaner_npy', l[0]))
+        print(train.shape, np.max(train))
+        for i in range(1, len(l)):
+            print(i, l[i])
+            t = np.load(os.path.join(UPLOAD_FOLDER, 'MIDI/' + millis + '/cleaner_npy', l[i]))
+            train = np.concatenate((train, t), axis=0)
+        print('printing train.shape...')
+        print(train.shape)
+        np.save(os.path.join(UPLOAD_FOLDER, 'MIDI/' + millis + '/jazz_test_piano.npy'), (train > 0.0))
 
-    """6. separate numpy array file into single phrases"""
-    if not os.path.exists(os.path.join(UPLOAD_FOLDER, 'MIDI/' + millis + '/phrase_test')):
-        os.makedirs(os.path.join(UPLOAD_FOLDER, 'MIDI/' + millis + '/phrase_test'))
-    x = np.load(os.path.join(UPLOAD_FOLDER, 'MIDI/' + millis + '/jazz_test_piano.npy'))
-    print(x.shape)
-    count = 0
-    for i in range(x.shape[0]):
-        if np.max(x[i]):
-            count += 1
-            np.save(os.path.join(UPLOAD_FOLDER, 'MIDI/' + millis + '/phrase_test/jazz_piano_test_{}.npy'.format(i + 1)),
-                    x[i])
-            print(x[i].shape)
-        if count == 11216:
-            break
-    print(count)
+        """6. separate numpy array file into single phrases"""
+        if not os.path.exists(os.path.join(UPLOAD_FOLDER, 'MIDI/' + millis + '/phrase_test')):
+            os.makedirs(os.path.join(UPLOAD_FOLDER, 'MIDI/' + millis + '/phrase_test'))
+        x = np.load(os.path.join(UPLOAD_FOLDER, 'MIDI/' + millis + '/jazz_test_piano.npy'))
+        print(x.shape)
+        count = 0
+        for i in range(x.shape[0]):
+            if np.max(x[i]):
+                count += 1
+                np.save(os.path.join(UPLOAD_FOLDER, 'MIDI/' + millis + '/phrase_test/jazz_piano_test_{}.npy'.format(i + 1)),
+                        x[i])
+                print(x[i].shape)
+            if count == 11216:
+                break
+        print(count)
+    else:
+        print('couldn\'t be cleaned')
