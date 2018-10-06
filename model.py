@@ -209,7 +209,7 @@ class cyclegan(object):
             ckpt_name = os.path.basename(ckpt.model_checkpoint_path)
             print('ckpt_name is ' + ckpt_name)
             # self.saver.restore(self.sess, os.path.join(checkpoint_dir, ckpt_name))
-            self.saver.restore(self.sess, os.path.join(checkpoint_dir, 'cyclegan.model-1843'))
+            self.saver.restore(self.sess, os.path.join(checkpoint_dir, 'cyclegan.model-1403'))
             return True
         else:
             return False
