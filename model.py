@@ -284,20 +284,46 @@ class cyclegan(object):
             save_midis(fake_midi, midi_path_transfer)
             #save_midis(fake_midi_cycle, midi_path_cycle)
 
-            '''
-            npy_path_origin = os.path.join(UPLOAD_FOLDER, 'origin')
-            npy_path_transfer = os.path.join(UPLOAD_FOLDER, 'transfer')
-            npy_path_cycle = os.path.join(UPLOAD_FOLDER, 'cycle')
-            if not os.path.exists(npy_path_origin):
-                os.makedirs(npy_path_origin)
-            if not os.path.exists(npy_path_transfer):
-                os.makedirs(npy_path_transfer)
-            if not os.path.exists(npy_path_cycle):
-                os.makedirs(npy_path_cycle)
-            np.save(os.path.join(npy_path_origin, '{}_origin.npy'.format(idx + 1)), origin_midi)
+
+            #npy_path_origin = os.path.join(UPLOAD_FOLDER, 'origin')
+            #npy_path_cycle = os.path.join(UPLOAD_FOLDER, 'cycle')
+            if not os.path.exists(os.path.join(UPLOAD_FOLDER, 'MIDI/' + millis + '/modified_NPY')):
+                os.makedirs(os.path.join(UPLOAD_FOLDER, 'MIDI/' + millis + '/modified_NPY'))
+            npy_path_transfer = os.path.join(UPLOAD_FOLDER, 'MIDI/' + millis + '/modified_NPY')
+            #if not os.path.exists(npy_path_transfer):
+                #os.makedirs(npy_path_transfer)
+            #if not os.path.exists(npy_path_cycle):
+                #os.makedirs(npy_path_cycle)
+            #np.save(os.path.join(npy_path_origin, '{}_origin.npy'.format(idx + 1)), origin_midi)
             np.save(os.path.join(npy_path_transfer, '{}_transfer.npy'.format(idx + 1)), fake_midi)
-            np.save(os.path.join(npy_path_cycle, '{}_cycle.npy'.format(idx + 1)), fake_midi_cycle)
-            '''
+            #np.save(os.path.join(npy_path_cycle, '{}_cycle.npy'.format(idx + 1)), fake_midi_cycle)
+
+        '''concatenate resulting numpy arrays'''
+
+        npy_files = glob.glob(os.path.join(UPLOAD_FOLDER, 'MIDI/' + millis + '/modified_NPY/*.*'))
+
+        #npy_files = [f for f in os.listdir(os.path.join(UPLOAD_FOLDER, 'MIDI/' + millis + '/modified_NPY'))]
+        #range(len(l))
+
+        print('printing numpy files...')
+        print(npy_files)
+
+        #allArrays = np.array([])
+        count = 0
+        #for x in range(len(npy_files)):
+        for x in sorted(npy_files):
+            x = np.load(x)
+            if count == 0:
+                allArrays = x
+            else:
+                print(x.shape)
+                allArrays = np.concatenate([allArrays, x])
+            count += 1
+
+        print('printing allArrays.shape...')
+        print(allArrays.shape)
+
+        save_midis(allArrays, os.path.join(UPLOAD_FOLDER, 'MIDI/' + millis + '/completed.mid'))
 
 # put midi files to be converted in datasets/MIDI/jazz/jazz_midi
 # datasets/MIDI' + millis + '/phrase_test is where numpy arrays are saved in the end
