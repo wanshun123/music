@@ -126,9 +126,12 @@ def upload_file():
 
             print('running midiToNpy...')
 
-            midiToNpy(millis)
+            midiToNpy(millis, filename)
 
             print('ok')
+
+            #model.test(args, request.form.get("fromGenre"), request.form.get("toGenre"), millis)
+
 
             tfconfig = tf.ConfigProto(allow_soft_placement=True)
             tfconfig.gpu_options.allow_growth = True
@@ -140,6 +143,7 @@ def upload_file():
                 print(request.form.get("fromGenre"))
                 print(request.form.get("toGenre"))
                 model.test(args, request.form.get("fromGenre"), request.form.get("toGenre"), millis)
+
 
             #
             # analysis done
@@ -226,6 +230,18 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     print(args)
+
+    '''
+    tfconfig = tf.ConfigProto(allow_soft_placement=True)
+    tfconfig.gpu_options.allow_growth = True
+    with tf.Session(config=tfconfig) as sess:
+        print('???')
+
+        model = cyclegan(sess, args)
+        #print(request.form.get("fromGenre"))
+        #print(request.form.get("toGenre"))
+        # model.test(args, request.form.get("fromGenre"), request.form.get("toGenre"), millis)
+    '''
 
     # if running on ec2 (port 80 gives permission error)
     # app.run(host = "0.0.0.0", port = 5000, debug = True, threaded = False)
