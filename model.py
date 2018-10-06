@@ -214,7 +214,7 @@ class cyclegan(object):
         else:
             return False
 
-    def test(self, args, fromGenre, toGenre, millis):
+    def test(self, args, fromGenre, toGenre, millis, filename):
         init_op = tf.global_variables_initializer()
         self.sess.run(init_op)
 
@@ -323,7 +323,7 @@ class cyclegan(object):
         print('printing allArrays.shape...')
         print(allArrays.shape)
 
-        save_midis(allArrays, os.path.join(UPLOAD_FOLDER, 'MIDI/' + millis + '/completed.mid'))
+        save_midis(allArrays, os.path.join(UPLOAD_FOLDER, 'MIDI/' + millis + '/to' + toGenre + '_' + filename + '.mid'))
 
 # put midi files to be converted in datasets/MIDI/jazz/jazz_midi
 # datasets/MIDI' + millis + '/phrase_test is where numpy arrays are saved in the end
