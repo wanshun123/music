@@ -43,17 +43,17 @@
     
     </div>
 
-    <div class="col-xs-12">
+<div class="col-xs-12">
 
-    <br>
+<br>
 
-<progressinfo></progressinfo>
+<div id = "progressinfo">
+<p></p>
+</div>
 
-<userinfo>
-        
-<p>The app was created by Alexey Moiseenkov (Russian: Алексей Моисеенков), Oleg Poyaganov, Ilya Frolov, Andrey Usoltsev and it was launched in June 2016 as a free mobile app.[4] A week after its launch, the app gained popularity and received over 7.5 million downloads and over 1 million active users as of July 2016.[5][6] It debuted on iOS on Apple App Store during the first week of June and it became the leading app at the App Store in Russia and other neighboring countries.[7] On 19 July 2016, the developer launched a beta version of the app for Android and it closed few hours later by developers after receiving feedback from its users.[8][9] It was later released publicly on 24 July 2016 on Google Play.[2]</p>
-
-</userinfo>
+<div id = "userinfo">
+<p></p>
+</div>
 
 </div>
 
@@ -63,14 +63,20 @@
 $('form').submit(function(e){
 e.preventDefault();
 
-/*
+// Window.open("http://usuaris.tinet.cat/bttt/escacs/nimzowitsch%20-%20my%20system.pdf")
+// <a href="http://usuaris.tinet.cat/bttt/escacs/nimzowitsch%20-%20my%20system.pdf" download>mysystem.pdf</a>
+// var downloadUrl = "http://usuaris.tinet.cat/bttt/escacs/nimzowitsch%20-%20my%20system.pdf";
+// setTimeout("window.location.assign('" + downloadUrl + "');", 1000);
 
-let imgPlaceholder = document.getElementById('image-placeholder')
+// <a href="http://usuaris.tinet.cat/bttt/escacs/" download="nimzowitsch%20-%20my%20system.pdf">Download</a>
 
-let userinfo = document.getElementById('userinfo')
-userinfo.innerHTML = '<loadingtext><img src="/static/spinner.gif" width="200px" height="200px" class ="center-block"><p><i>Processing image...</i></p></loadingtext>'
 
-*/
+// let imgPlaceholder = document.getElementById('image-placeholder')
+
+let progressinfo = document.getElementById('progressinfo')
+progressinfo.innerHTML = '<loadingtext><img src="/static/spinner.gif" width="200px" height="200px" class ="center-block"><p><i>Processing MIDI...</i></p></loadingtext>'
+
+
 
 var form = document.getElementById("form");
 var fd = new FormData($('form'));
@@ -96,7 +102,7 @@ console.log(res)
 
 // imgPlaceholder.innerHTML = '<img src="/static/qm.jpg">'
 
-// userinfo.innerHTML = '<loadingtext><img src="/static/spinner.gif" width="200px" height="200px" class ="center-block"><p><i>Compiling analysis...</i></p><p><b>' + res['msg'] + '</b></p></loadingtext>'
+progressinfo.innerHTML = '<loadingtext><img src="/static/spinner.gif" width="200px" height="200px" class ="center-block"><p><i>Converting MIDI...</i></p><p><b>' + res['msg'] + '</b></p></loadingtext>'
 
 $.ajax({
 url: "/analyze",
@@ -113,7 +119,13 @@ console.log(res)
 
 } else {
 
-// userinfo.innerHTML = '<b>' + res['msg'] + '</b>'
+progressinfo.innerHTML = '<b>' + res['msg'] + '</b>'
+
+var link = document.createElement('a');
+document.body.appendChild(link);
+link.href = "http://usuaris.tinet.cat/bttt/escacs/nimzowitsch%20-%20my%20system.pdf";
+link.download = "nimzowitsch%20-%20my%20system.pdf"
+link.click();
 
 }
 
