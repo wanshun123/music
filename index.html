@@ -52,6 +52,7 @@
 </div>
 
 <div id = "userinfo">
+<hr>
 <p></p>
 </div>
 
@@ -63,25 +64,8 @@
 $('form').submit(function(e){
 e.preventDefault();
 
-// Window.open("http://usuaris.tinet.cat/bttt/escacs/nimzowitsch%20-%20my%20system.pdf")
-// <a href="http://usuaris.tinet.cat/bttt/escacs/nimzowitsch%20-%20my%20system.pdf" download>mysystem.pdf</a>
-// var downloadUrl = "http://usuaris.tinet.cat/bttt/escacs/nimzowitsch%20-%20my%20system.pdf";
-// setTimeout("window.location.assign('" + downloadUrl + "');", 1000);
-
-// <a href="http://usuaris.tinet.cat/bttt/escacs/" download="nimzowitsch%20-%20my%20system.pdf">Download</a>
-
-
-// let imgPlaceholder = document.getElementById('image-placeholder')
-
 let progressinfo = document.getElementById('progressinfo')
 progressinfo.innerHTML = '<loadingtext><img src="/static/spinner.gif" width="200px" height="200px" class ="center-block"><p><i>Processing MIDI...</i></p></loadingtext>'
-
-
-
-var form = document.getElementById("form");
-var fd = new FormData($('form'));
-
-console.log(fd)
 
 $.ajax({
 url: $(this).attr('action'),
@@ -95,37 +79,19 @@ processData: false
 
 if (res['success'] == true) {
 
-face_location = res['face_image']
-original_image = res['original_image']
+var link = document.createElement('a');
+document.body.appendChild(link);
+link.href = "/static/MIDI/" + res['millis'] + "/to" + res['to_genre'] + "_" + res['original_filename'];
+link.download = "to" + res['to_genre'] + "_" + res['original_filename']
+link.click();
 
 console.log(res)
 
-// imgPlaceholder.innerHTML = '<img src="/static/qm.jpg">'
-
-progressinfo.innerHTML = '<loadingtext><img src="/static/spinner.gif" width="200px" height="200px" class ="center-block"><p><i>Converting MIDI...</i></p><p><b>' + res['msg'] + '</b></p></loadingtext>'
-
-$.ajax({
-url: "/analyze",
-type: 'POST',
-data: original_image,
-cache: false,
-contentType: false,
-processData: false 
-}).done(function(res){
-// imgPlaceholder.innerHTML = '<img src="' + face_location + '">'
-// userinfo.innerHTML = res
-console.log(res)
-})
+progressinfo.innerHTML = "<b>Success! Your file should have downloaded now.</b>"
 
 } else {
 
 progressinfo.innerHTML = '<b>' + res['msg'] + '</b>'
-
-var link = document.createElement('a');
-document.body.appendChild(link);
-link.href = "http://usuaris.tinet.cat/bttt/escacs/nimzowitsch%20-%20my%20system.pdf";
-link.download = "nimzowitsch%20-%20my%20system.pdf"
-link.click();
 
 }
 
