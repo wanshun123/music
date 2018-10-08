@@ -41,14 +41,14 @@ def home():
 def upload_file():
     if request.method == 'POST':
         if 'file' not in request.files:
-            feedback = 'No file found.'
+            feedback = 'ERROR: No file found.'
             return jsonify(msg=feedback, success=False)
         file = request.files['file']
         if file.filename == '':
-            feedback = 'No file name.'
+            feedback = 'ERROR: No file name.'
             return jsonify(msg=feedback, success=False)
         if request.form.get("fromGenre") == request.form.get("toGenre"):
-            feedback = 'You must select different genres.'
+            feedback = 'ERROR: You must select different genres.'
             return jsonify(msg=feedback, success=False)
         if file and allowed_file(file.filename):
 
@@ -59,28 +59,33 @@ def upload_file():
 
             filename = millis + secure_filename(file.filename)
             f = request.files['file']
-            file_location = os.path.join(app.config['MIDI_FOLDER'], filename)
+
+            os.makedirs(os.path.join(UPLOAD_FOLDER, 'MIDI/' + millis))
+            file_location = os.path.join(app.config['MIDI_FOLDER'], millis, filename)
             f.save(file_location)
 
             # run analysis
 
-            midiToNpy(millis, filename)
+            if midiToNpy(millis, filename) == True:
 
-            tfconfig = tf.ConfigProto(allow_soft_placement=True)
-            tfconfig.gpu_options.allow_growth = True
-            with tf.Session(config=tfconfig) as sess:
+                tfconfig = tf.ConfigProto(allow_soft_placement=True)
+                tfconfig.gpu_options.allow_growth = True
+                with tf.Session(config=tfconfig) as sess:
 
-                model = cyclegan(sess, args)
-                print(request.form.get("fromGenre"))
-                print(request.form.get("toGenre"))
-                model.test(args, request.form.get("fromGenre"), request.form.get("toGenre"), millis, secure_filename(file.filename))
+                    model = cyclegan(sess, args)
+                    model.test(args, request.form.get("fromGenre"), request.form.get("toGenre"), millis, secure_filename(file.filename))
 
-            # analysis done
+                # analysis done
 
-            return jsonify(original_filename = secure_filename(file.filename), millis = millis, to_genre = request.form.get("toGenre"), success = True)
+                return jsonify(original_filename = secure_filename(file.filename), millis = millis, to_genre = request.form.get("toGenre"), success = True)
+
+            else:
+
+                feedback = 'ERROR: There was an issue processing your MIDI file. This model can only process MIDI files where the first beat starts at 0, the time signature doesn\'t change and the time signature is 4/4.'
+                return jsonify(msg=feedback, success=False)
 
         else:
-            feedback = 'It seems you haven\'t uploaded a MIDI file. Your file must be of type midi. If you have a file in a different audio format like MP3 or WAV, please convert it to midi first.'
+            feedback = 'ERROR: It seems you haven\'t uploaded a MIDI file. Your file must be of type midi. If you have a file in a different audio format like MP3 or WAV, please convert it to midi first.'
             return jsonify(msg=feedback, success=False)
 
 if __name__ == "__main__":
