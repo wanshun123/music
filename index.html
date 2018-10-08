@@ -87,7 +87,7 @@ link.click();
 
 console.log(res)
 
-progressinfo.innerHTML = "<b>Success! Your file should have downloaded now.</b>"
+progressinfo.innerHTML = '<b>' + 'Success! Your new midi file converted into a ' + res['to_genre'] + ' genre should have downloaded now. If it hasn\'t, you can download it <a href="' + '/static/MIDI/' + res['millis'] + '/to' + res['to_genre'] + '_' + res['original_filename'] + '">here</a>.' + '</b>'
 
 } else {
 
