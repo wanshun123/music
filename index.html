@@ -49,7 +49,8 @@
 
 <div id = "userinfo">
 <hr>
-<p></p>
+<p>Use the form above to upload a MIDI file, which our machine learning model will try to convert into a different genre of music according to what you select. This website was built using Flask and with code from <a href="https://github.com/sumuzhao/CycleGAN-Music-Style-Transfer">Symbolic Music Genre Transfer with CycleGAN</a> (see the paper <a href="https://www.tik.ee.ethz.ch/file/2e6c8407bf92ce1e47c0faa7e9a3014d/cyclegan-music-style%20(3).pdf">here</a>). Note that the machine learning models used here are those I trained myself, so could likely be improved are not necessarily representative of the effectiveness of the method described in the paper.</p>
+<p>Get in touch: contact (at) dataanalysis (dot) world</p>
 </div>
 
 </div>
@@ -83,7 +84,7 @@ link.click();
 
 console.log(res)
 
-progressinfo.innerHTML = '<b>' + 'Success! Your new midi file converted into a ' + res['to_genre'] + ' genre should have downloaded now. If it hasn\'t, you can download it <a href="' + '/static/MIDI/' + res['millis'] + '/to' + res['to_genre'] + '_' + res['original_filename'] + '">here</a>.' + '</b>'
+progressinfo.innerHTML = '<b>' + 'Success! Your new MIDI file converted into a ' + res['to_genre'] + ' genre should have downloaded now. If it hasn\'t, you can download it <a href="' + '/static/MIDI/' + res['millis'] + '/to' + res['to_genre'] + '_' + res['original_filename'] + '">here</a>.' + '</b>'
 
 } else {
 
