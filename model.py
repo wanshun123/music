@@ -198,6 +198,13 @@ class cyclegan(object):
 
         model_dir = fromGenre + '2' + toGenre
 
+        if model_dir == 'Jazz2Classic':
+            model_dir = 'Classic2Jazz'
+        if model_dir == 'Pop2Classic':
+            model_dir = 'Classic2Pop'
+        if model_dir == 'Pop2Jazz':
+            model_dir == 'Jazz2Pop'
+
         print(model_dir)
 
         checkpoint_dir = os.path.join(checkpoint_dir, model_dir)
