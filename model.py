@@ -209,7 +209,7 @@ class cyclegan(object):
             ckpt_name = os.path.basename(ckpt.model_checkpoint_path)
             print('ckpt_name is ' + ckpt_name)
             # self.saver.restore(self.sess, os.path.join(checkpoint_dir, ckpt_name))
-            self.saver.restore(self.sess, os.path.join(checkpoint_dir, 'cyclegan.model-1403'))
+            self.saver.restore(self.sess, os.path.join(checkpoint_dir, 'cyclegan.model'))
             return True
         else:
             return False
@@ -257,13 +257,7 @@ class cyclegan(object):
         '''
 
         # sample_path = os.path.join(UPLOAD_FOLDER, 'MIDI/' + millis + '/phrase_test/')
-        a = glob.glob('.static/MIDI/' + millis + '/phrase_test/*.*')
-        print('printing a....')
-        print(a)
         sample_files = glob.glob('static/MIDI/' + millis + '/phrase_test/*.*')
-        #print('printing b...')
-        #print(b)
-        #print(glob.__file__)
         print(os.path.join(UPLOAD_FOLDER, 'MIDI/' + millis + '/phrase_test/'))
         ##sample_files = glob(os.path.join(UPLOAD_FOLDER, 'MIDI/' + millis + '/phrase_test/*.*'))
 
@@ -526,12 +520,12 @@ def midiToNpy(millis, filename):
     '''
 
     """2. convert_clean.py"""
-    midi_paths = get_midi_path(MIDI_FOLDER)
-    print('printing midi_paths...')
-    print(midi_paths)
+    #midi_paths = get_midi_path(MIDI_FOLDER)
+    #print('printing midi_paths...')
+    #print(midi_paths)
     midi_dict = {}
     #kv_pairs = [converter(midi_path, millis) for midi_path in midi_paths]
-    file_location = os.path.join(MIDI_FOLDER, filename)
+    file_location = os.path.join(MIDI_FOLDER, millis, filename)
     print('file_location is ' + file_location)
     kv_pairs = [converter(file_location, millis)]
     print('printing kv_pairs...')
@@ -546,10 +540,9 @@ def midiToNpy(millis, filename):
         print('printing midi_dict...')
         print(midi_dict)
         json.dump(midi_dict, outfile)
-        print("[Done] {} files out of {} have been successfully converted".format(len(midi_dict), len(midi_paths)))
+        print("[Done] {} file converted".format(len(midi_dict)))
     ##with open(os.path.join(UPLOAD_FOLDER, 'MIDI/' + millis + '/json/midis.json'), 'w') as infile:
     # midi_dict = json.load(infile)
-    print('s')
     count = 0
     make_sure_path_exists(cleaner_path)
     midi_dict_clean = {}
@@ -562,6 +555,10 @@ def midiToNpy(millis, filename):
         json.dump(midi_dict_clean, outfile)
     print("[Done] {} files out of {} have been successfully cleaned".format(count, len(midi_dict)))
 
+    if count == 0:
+        print('couldn\'t be cleaned.')
+        return False
+
     """3. choose the clean midi from original sets"""
     if not os.path.exists(os.path.join(UPLOAD_FOLDER, 'MIDI/' + millis + '/cleaner_midi')):
         os.makedirs(os.path.join(UPLOAD_FOLDER, 'MIDI/' + millis + '/cleaner_midi'))
@@ -569,7 +566,7 @@ def midiToNpy(millis, filename):
     print(l)
     print(len(l))
     for i in l:
-        shutil.copy(os.path.join(UPLOAD_FOLDER, 'MIDI', os.path.splitext(i)[0] + '.mid'),
+        shutil.copy(os.path.join(UPLOAD_FOLDER, 'MIDI', millis, os.path.splitext(i)[0] + '.mid'),
                     os.path.join(UPLOAD_FOLDER, 'MIDI/' + millis + '/cleaner_midi', os.path.splitext(i)[0] + '.mid'))
 
     """4. merge and crop"""
@@ -643,5 +640,7 @@ def midiToNpy(millis, filename):
             if count == 11216:
                 break
         print(count)
+        return True
     else:
-        print('couldn\'t be cleaned')
+        print('Some other issue - though shouldn\'t ever get here')
+        return False
