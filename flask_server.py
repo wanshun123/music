@@ -85,7 +85,7 @@ def upload_file():
                 return jsonify(msg=feedback, success=False)
 
         else:
-            feedback = 'ERROR: It seems you haven\'t uploaded a MIDI file. Your file must be of type midi. If you have a file in a different audio format like MP3 or WAV, please convert it to midi first.'
+            feedback = 'ERROR: It seems you haven\'t uploaded a MIDI file. Your file must be of type .MIDI. If you have a file in a different audio format like MP3 or WAV, please convert it to MIDI first.'
             return jsonify(msg=feedback, success=False)
 
 if __name__ == "__main__":
