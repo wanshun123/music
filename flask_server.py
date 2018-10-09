@@ -3,7 +3,7 @@ from keras.applications import imagenet_utils
 from PIL import Image
 import numpy as np
 import flask
-from flask import Flask, request, redirect, url_for, render_template, jsonify, json
+from flask import Flask, request, redirect, url_for, render_template, jsonify, json, send_from_directory
 import io
 from keras.models import load_model
 from werkzeug.utils import secure_filename
@@ -38,12 +38,17 @@ def allowed_file(filename):
 def home():
     return render_template('index.html')
 
-'''
-@app.route('/uploads', methods=['GET', 'POST'])
+
+@app.route('/uploads/<path:filename>', methods=['GET', 'POST'])
 def download(filename, path):
-    #uploads = os.path.join(current_app.root_path, app.config['UPLOAD_FOLDER'])
+    print('downloading...')
+    print(path)
+    print(filename)
+    print(os.path.join(path, filename))
     return send_from_directory(directory=path, filename=filename)
-'''
+    #return send_static_file("toJazz_Study_No.1_Confidence_opus.109.mid")
+    #uploads = os.path.join(current_app.root_path, app.config['UPLOAD_FOLDER'])
+    #return send_from_directory(directory=path, filename=filename)
 
 @app.route('/uploaded', methods=['GET', 'POST'])
 def upload_file():
@@ -94,9 +99,10 @@ def upload_file():
 
                 # analysis done
 
-                file2 = 'to' + request.form.get("toGenre") + '_' + filename
-
+                file2 = 'to' + request.form.get("toGenre") + '_' + filename + '.mid'
                 converted_location = os.path.join(app.config['MIDI_FOLDER'], millis)
+
+                download(file2, converted_location)
 
                 return jsonify(original_filename = secure_filename(file.filename), millis = millis, to_genre = request.form.get("toGenre"), success = True, midi_has_issue = result[1], midi_info = result[2], location = converted_location, filename = file2)
 
