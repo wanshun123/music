@@ -25,6 +25,7 @@ MIDI_FOLDER = 'static/MIDI'
 ALLOWED_EXTENSIONS = set(['mid', 'midi'])
 
 app = Flask(__name__)
+application = app
 
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 app.config['MIDI_FOLDER'] = MIDI_FOLDER
@@ -36,6 +37,13 @@ def allowed_file(filename):
 @app.route('/', methods=['GET', 'POST'])
 def home():
     return render_template('index.html')
+
+'''
+@app.route('/uploads', methods=['GET', 'POST'])
+def download(filename, path):
+    #uploads = os.path.join(current_app.root_path, app.config['UPLOAD_FOLDER'])
+    return send_from_directory(directory=path, filename=filename)
+'''
 
 @app.route('/uploaded', methods=['GET', 'POST'])
 def upload_file():
@@ -54,11 +62,12 @@ def upload_file():
 
             print('file and allowed_file(file.filename)')
 
+            filename = secure_filename(file.filename)
+            f = request.files['file']
+
             millis = int(round(time.time() * 1000))
             millis = str(millis)
-
-            filename = millis + secure_filename(file.filename)
-            f = request.files['file']
+            millis = filename + '-' + millis
 
             os.makedirs(os.path.join(UPLOAD_FOLDER, 'MIDI/' + millis))
             file_location = os.path.join(app.config['MIDI_FOLDER'], millis, filename)
@@ -66,7 +75,15 @@ def upload_file():
 
             # run analysis
 
-            if midiToNpy(millis, filename) == True:
+            result = midiToNpy(millis, filename)
+
+            print('printing result...')
+            print(result)
+            print(result[0])
+
+            if result[0] == True:
+
+                ## successful
 
                 tfconfig = tf.ConfigProto(allow_soft_placement=True)
                 tfconfig.gpu_options.allow_growth = True
@@ -77,11 +94,15 @@ def upload_file():
 
                 # analysis done
 
-                return jsonify(original_filename = secure_filename(file.filename), millis = millis, to_genre = request.form.get("toGenre"), success = True)
+                file2 = 'to' + request.form.get("toGenre") + '_' + filename
+
+                converted_location = os.path.join(app.config['MIDI_FOLDER'], millis)
+
+                return jsonify(original_filename = secure_filename(file.filename), millis = millis, to_genre = request.form.get("toGenre"), success = True, midi_has_issue = result[1], midi_info = result[2], location = converted_location, filename = file2)
 
             else:
 
-                feedback = 'ERROR: There was an issue processing your MIDI file. This model can only process MIDI files where the first beat starts at 0, the time signature doesn\'t change and the time signature is 4/4.'
+                feedback = 'ERROR: There was an issue processing your MIDI file.'
                 return jsonify(msg=feedback, success=False)
 
         else:
@@ -148,6 +169,8 @@ if __name__ == "__main__":
 
     # if running on ec2 (port 80 gives permission error)
     # app.run(host = "0.0.0.0", port = 5000, debug = True, threaded = False)
+    application.debug = True
+    application.run()
 
     # if running on local machine
-    app.run(host="0.0.0.0", port=80, debug=True, threaded=False)
+    # app.run(host="0.0.0.0", port=80, debug=True, threaded=False)
