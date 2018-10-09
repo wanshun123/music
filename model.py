@@ -325,8 +325,10 @@ class cyclegan(object):
         print(allArrays.shape)
 
         save_midis(allArrays, os.path.join(UPLOAD_FOLDER, 'MIDI/' + millis + '/to' + toGenre + '_' + filename + '.mid'))
+        #save_midis(allArrays, os.path.join(UPLOAD_FOLDER, 'to' + toGenre + '_' + filename + '.mid'))
 
-        #download(millis, pathToMidi)
+        print(millis)
+        pathToMidi = os.path.join(UPLOAD_FOLDER, 'MIDI/' + millis)
 
 # put midi files to be converted in datasets/MIDI/jazz/jazz_midi
 # datasets/MIDI' + millis + '/phrase_test is where numpy arrays are saved in the end
