@@ -78,20 +78,12 @@ if (res['success'] == true) {
 
 var link = document.createElement('a');
 document.body.appendChild(link);
-// link.href = "/static/MIDI/" + res['millis']
-// link.download = "to" + res['to_genre'] + "_" + res['original_filename'] + '.mid'
-// link.href = res['location']
-// link.download = res['filename']
 link.href = "/static/MIDI/" + res['millis'] + "/to" + res['to_genre'] + "_" + res['original_filename'] + '.mid';
 link.download = "to" + res['to_genre'] + "_" + res['original_filename'] + '.mid'
 link.click();
 
-console.log(res)
-console.log(res['location'])
-console.log(res['filename'])
-
 if (res['midi_has_issue']) {
-    progressinfo.innerHTML = '<b>' + 'Success! Your new MIDI file converted into a ' + res['to_genre'] + ' genre should have downloaded now. If it hasn\'t, you can download it <a href="' + '/static/MIDI/' + res['millis'] + '/to' + res['to_genre'] + '_' + res['original_filename'] + '">here</a>. <br><br><loadingtext2>NB: The machine learning model used here was trained only with MIDI files with a first beat starting at 0 and a fixed time signature of 4/4, which is different to the MIDI file you uploaded with the following properties: ' + JSON.stringify(res['midi_info']) + '<br>The MIDI file generated may be much shorter than your original one.</loadingtext2>' + '</b>'
+    progressinfo.innerHTML = '<b>' + 'Success! Your new MIDI file converted into a ' + res['to_genre'] + ' genre should have downloaded now. If it hasn\'t, you can download it <a href="' + '/static/MIDI/' + res['millis'] + '/to' + res['to_genre'] + '_' + res['original_filename'] + '.mid">here</a>. <br><br><loadingtext2>NB: The machine learning model used here was trained only with MIDI files with a first beat starting at 0 and a fixed time signature of 4/4, which is different to the MIDI file you uploaded with the following properties: ' + JSON.stringify(res['midi_info']) + '<br>The MIDI file generated may be much shorter than your original one.</loadingtext2>' + '</b>'
 } else {
     progressinfo.innerHTML = '<b>' + 'Success! Your new MIDI file converted into a ' + res['to_genre'] + ' genre should have downloaded now. If it hasn\'t, you can download it <a href="' + '/static/MIDI/' + res['millis'] + '/to' + res['to_genre'] + '_' + res['original_filename'] + '">here</a>.' + '</b>'
 }
