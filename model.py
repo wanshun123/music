@@ -202,8 +202,8 @@ class cyclegan(object):
             model_dir = 'Classic2Jazz'
         if model_dir == 'Pop2Classic':
             model_dir = 'Classic2Pop'
-        if model_dir == 'Pop2Jazz':
-            model_dir == 'Jazz2Pop'
+        if model_dir == 'Jazz2Pop':
+            model_dir == 'Pop2Jazz'
 
         print(model_dir)
 
@@ -326,6 +326,8 @@ class cyclegan(object):
 
         save_midis(allArrays, os.path.join(UPLOAD_FOLDER, 'MIDI/' + millis + '/to' + toGenre + '_' + filename + '.mid'))
 
+        #download(millis, pathToMidi)
+
 # put midi files to be converted in datasets/MIDI/jazz/jazz_midi
 # datasets/MIDI' + millis + '/phrase_test is where numpy arrays are saved in the end
 
@@ -399,6 +401,18 @@ def get_midi_info(pm):
 
 def midi_filter(midi_info):
     """Return True for qualified midi files and False for unwanted ones"""
+    '''
+    if midi_info['first_beat_time'] > 0.0:
+        return False
+    elif midi_info['num_time_signature_change'] > 1:
+        return False
+    elif midi_info['time_signature'] not in ['4/4']:
+        return False
+    '''
+    return True
+
+def midi_filter1(midi_info):
+    """Return True for qualified midi files and False for unwanted ones"""
     if midi_info['first_beat_time'] > 0.0:
         return False
     elif midi_info['num_time_signature_change'] > 1:
@@ -406,7 +420,6 @@ def midi_filter(midi_info):
     elif midi_info['time_signature'] not in ['4/4']:
         return False
     return True
-
 
 def get_merged(multitrack):
     """Return a `pypianoroll.Multitrack` instance with piano-rolls merged to
@@ -562,9 +575,12 @@ def midiToNpy(millis, filename):
         json.dump(midi_dict_clean, outfile)
     print("[Done] {} files out of {} have been successfully cleaned".format(count, len(midi_dict)))
 
-    if count == 0:
-        print('couldn\'t be cleaned.')
-        return False
+    for key in midi_dict:
+        if midi_filter1(midi_dict[key]):
+            midiHasIssue = False
+        else:
+            midiHasIssue = True
+            print('couldn\'t be cleaned.')
 
     """3. choose the clean midi from original sets"""
     if not os.path.exists(os.path.join(UPLOAD_FOLDER, 'MIDI/' + millis + '/cleaner_midi')):
@@ -612,15 +628,18 @@ def midiToNpy(millis, filename):
                                            os.path.splitext(l[i])[0] + '.mid'))
             np.save(os.path.join(UPLOAD_FOLDER, 'MIDI/' + millis + '/cleaner_npy', os.path.splitext(l[i])[0] + '.npy'),
                     pr_re)
+            print('saved properly in cleaner_npy?')
         except:
             count += 1
             print('Wrong', l[i])
             continue
     print(count)
 
-    """5. concatenate into a big binary numpy array file"""
+    """""""5. concatenate into a big binary numpy array file"""
     l = [f for f in os.listdir(os.path.join(UPLOAD_FOLDER, 'MIDI/' + millis + '/cleaner_npy'))]
     print(l)
+    print('printing len(l)...')
+    print(len(l))
     if len(l) > 0:
         train = np.load(os.path.join(UPLOAD_FOLDER, 'MIDI/' + millis + '/cleaner_npy', l[0]))
         print(train.shape, np.max(train))
@@ -647,7 +666,7 @@ def midiToNpy(millis, filename):
             if count == 11216:
                 break
         print(count)
-        return True
+        return [True, midiHasIssue, kv_pairs[0][1]]
     else:
         print('Some other issue - though shouldn\'t ever get here')
-        return False
+        return [False, midiHasIssue, kv_pairs[0][1]]
