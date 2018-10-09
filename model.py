@@ -322,13 +322,14 @@ class cyclegan(object):
             count += 1
 
         print('printing allArrays.shape...')
-        print(allArrays.shape)
+        #print(allArrays.shape)
 
-        save_midis(allArrays, os.path.join(UPLOAD_FOLDER, 'MIDI/' + millis + '/to' + toGenre + '_' + filename + '.mid'))
-        #save_midis(allArrays, os.path.join(UPLOAD_FOLDER, 'to' + toGenre + '_' + filename + '.mid'))
-
-        print(millis)
-        pathToMidi = os.path.join(UPLOAD_FOLDER, 'MIDI/' + millis)
+        try:
+            save_midis(allArrays, os.path.join(UPLOAD_FOLDER, 'MIDI/' + millis + '/to' + toGenre + '_' + filename + '.mid'))
+            return True
+        except:
+            print('something wrong')
+            return False
 
 # put midi files to be converted in datasets/MIDI/jazz/jazz_midi
 # datasets/MIDI' + millis + '/phrase_test is where numpy arrays are saved in the end
@@ -644,13 +645,13 @@ def midiToNpy(millis, filename):
     print(len(l))
     if len(l) > 0:
         train = np.load(os.path.join(UPLOAD_FOLDER, 'MIDI/' + millis + '/cleaner_npy', l[0]))
-        print(train.shape, np.max(train))
+        #print(train.shape, np.max(train))
         for i in range(1, len(l)):
             print(i, l[i])
             t = np.load(os.path.join(UPLOAD_FOLDER, 'MIDI/' + millis + '/cleaner_npy', l[i]))
             train = np.concatenate((train, t), axis=0)
-        print('printing train.shape...')
-        print(train.shape)
+        #print('printing train.shape...')
+        #print(train.shape)
         np.save(os.path.join(UPLOAD_FOLDER, 'MIDI/' + millis + '/jazz_test_piano.npy'), (train > 0.0))
 
         """6. separate numpy array file into single phrases"""
