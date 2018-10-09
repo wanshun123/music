@@ -95,16 +95,20 @@ def upload_file():
                 with tf.Session(config=tfconfig) as sess:
 
                     model = cyclegan(sess, args)
-                    model.test(args, request.form.get("fromGenre"), request.form.get("toGenre"), millis, secure_filename(file.filename))
+                    if model.test(args, request.form.get("fromGenre"), request.form.get("toGenre"), millis, secure_filename(file.filename)) == False:
+                        feedback = 'Something went wrong trying to convert your MIDI file.'
+                        return jsonify(msg=feedback, success=False)
 
-                # analysis done
+                    else:
 
-                file2 = 'to' + request.form.get("toGenre") + '_' + filename + '.mid'
-                converted_location = os.path.join(app.config['MIDI_FOLDER'], millis)
+                        # analysis done
 
-                download(file2, converted_location)
+                        file2 = 'to' + request.form.get("toGenre") + '_' + filename + '.mid'
+                        converted_location = os.path.join(app.config['MIDI_FOLDER'], millis)
 
-                return jsonify(original_filename = secure_filename(file.filename), millis = millis, to_genre = request.form.get("toGenre"), success = True, midi_has_issue = result[1], midi_info = result[2], location = converted_location, filename = file2)
+                        download(file2, converted_location)
+
+                        return jsonify(original_filename = secure_filename(file.filename), millis = millis, to_genre = request.form.get("toGenre"), success = True, midi_has_issue = result[1], midi_info = result[2], location = converted_location, filename = file2)
 
             else:
 
